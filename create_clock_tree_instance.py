@@ -80,7 +80,6 @@ if len(sys.argv)==2:
         os.makedirs("graphs")
     with open(csvfile) as data:
         reader = csv.reader(data)
-        maxTicks = 10000;
         for row in reader:
             print(row)
             d = int(row[0])

@@ -26,7 +26,7 @@ function print_usage()
     echo "  -c | --csv             : Provide a CSV file, with two columns, depth and fanout, for any number of rows."
     echo "                           All of these depth/fanout pairs will be run"
     echo ""
-    echo "  -r | --range           : Boolean - runs from a min depth (default 1) and a nub fanout (defaul 1) to given depth/range"
+    echo "  -r | --range           : Boolean - runs from a min depth (default 1) and a min fanout (default 1) to given depth/range"
     echo ""
     echo "  -d | --depth=d         : Integer - The depth (or maximum depth) of the graph(s) to be generated and tested"
     echo ""
@@ -38,7 +38,7 @@ function print_usage()
     echo ""
     echo "  -x | --xml-only        : Boolean - Only build the XML of the given depth/fanout (including range). Will be stored in /graphs/"
     echo ""
-    echo "  -r | --results=r       : Filepath - Location for execution time results to be stored in"
+    echo "  --results=r            : Filepath - Location for execution time results to be stored in"
     echo ""
     echo "  -p | --placement=p     : Keyword - cluster      : generate a new clustered placement based on thread count"
     echo "                                     cluster-core : generate a new clustered placement based on cores"
@@ -64,7 +64,7 @@ function prepare_xmlc_arguments()
     xmlc_arguments="$xmlc_arguments --message-types="$object_location"_messages.csv"
     xmlc_arguments="$xmlc_arguments --app-pins-addr-map="$object_location"_pin_map.csv"
     xmlc_arguments="$xmlc_arguments --measure="$object_location"_"$depth"_"$fanout"_measure.csv -o "$object_location".elf"
-    
+
     case $placement in
 
         "cluster") xmlc_arguments="$xmlc_arguments --placement=cluster";;
@@ -73,7 +73,7 @@ function prepare_xmlc_arguments()
 
         "cluster-mbox") xmlc_arguments="$xmlc_arguments --placement=cluster-mbox";;
 
-	"cluster-board") xmlc_arguments="$xmlc_arguments --placement=cluster-board";;
+	    "cluster-board") xmlc_arguments="$xmlc_arguments --placement=cluster-board";;
 
         "random") ;;
 
@@ -110,7 +110,7 @@ function prepare_xmlc_arguments()
         xmlc_arguments="$xmlc_arguments --hardware-send-over-recv=$send_over_recv"
     fi
 
-#    PERFMON? TODO: MAKE THIS AN OPTION	
+#    PERFMON? TODO: MAKE THIS AN OPTION
 #    xmlc_arguments="$xmlc_arguments --softswitch_enable_profile=1000"
 }
 
@@ -139,8 +139,6 @@ function run()
         printf "%d,%d,%s\n" $depth $fanout `cat objects/clock_tree_measures.csv` >> $results_file
         if [[ $? == 0 ]]; then
             complete=1;
-#	    cp "$object_location"_"$depth"_"$fanout"_perfmon.csv perfmon/
-#	    cp "$object_location"_"$depth"_"$fanout"_measure.csv perfmon/
         else
             complete=0;
         fi;
@@ -214,7 +212,6 @@ while [ "$#" -gt 0 ]; do
     -x) xml_only=1; shift 1;;
     --xml-only) xml_only=1; shift 1;;
 
-    -r) results_file="$2"; shift 2;;
     --results=*) results_file="${1#*=}"; shift 1;;
     --results) echo "$1 requires a filepath argument" >&2; exit 1;;
 
