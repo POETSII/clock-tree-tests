@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+echo "Removing graphs directory"
+rm -rf graphs
+echo "Removing objects direction"
+rm -rf objects

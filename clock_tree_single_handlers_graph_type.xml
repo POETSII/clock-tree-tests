@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<Graphs xmlns="https://poets-project.org/schemas/virtual-graph-schema-v2">
+  <GraphType id="clock_tree">
+	<Documentation>
+		This implements a simple clock-tree benchmark. The graph consists of
+		a root node, branch nodes, and leaf nodes. The root node initiates
+		clock pulses, the branch nodes fan them out, and the leaf nodes
+		reflect them back again.
+	</Documentation>
+
+	 <MetaData>
+		"native_dimension":2
+	 </MetaData>
+
+	 <Properties>
+	 	<Scalar name="max_ticks" type="uint32_t" default="100"/>
+	 </Properties>
+
+    <MessageTypes>
+      <MessageType id="__init__">
+				<Documentation>This doesn't have any properties</Documentation>
+      </MessageType>
+
+      <MessageType id="tick">
+ 			<Message>
+ 				<Scalar name="type" type="uint32_t"/>
+ 			</Message>
+ 			<Documentation> 0: Tick, 1: Ack</Documentation>
+      </MessageType>
+    </MessageTypes>
+
+    <DeviceTypes>
+      <DeviceType id="node">
+		<Properties>
+			<Scalar type="uint32_t" name="type">
+            	<Documentation> 0: root, 1: branch, 2:leaf, 3:drain_branch, 4:drain </Documentation>
+            </Scalar>
+            <Scalar type="uint32_t" name="fanout"/>
+		</Properties>
+
+		<State>
+		  <Scalar type="uint32_t" name="cycle" />
+		  <Scalar type="uint32_t" name="status" />
+		</State>
+
+		<ReadyToSend><![CDATA[
+			if (deviceProperties->type == 0) {
+				*readyToSend = 0;
+				if(deviceState->status==0){
+			 		*readyToSend = OUTPUT_FLAG_node_tick_out;
+				}
+			} else if (deviceProperties->type == 4) {
+				*readyToSend = 0;
+				if (deviceState->status>=deviceProperties->fanout){
+					*readyToSend = OUTPUT_FLAG_node_tick_out;
+				}
+			} else if (deviceProperties->type == 1) {
+				if(deviceState->status==0){
+					*readyToSend=0;
+				}else if(deviceState->status==1){
+					*readyToSend = OUTPUT_FLAG_node_tick_out;
+				}else{
+					*readyToSend=0;
+				}
+			} else if (deviceProperties->type == 2) {
+				*readyToSend = deviceState->status ? OUTPUT_FLAG_node_tick_out : 0;
+			} else if (deviceProperties->type == 3) {
+				if (deviceState->status>=deviceProperties->fanout) {
+					*readyToSend = OUTPUT_FLAG_node_tick_out;
+				} else {
+					*readyToSend = 0;
+				}
+			}
+		]]></ReadyToSend>
+
+		<InputPin name="tick_in" messageTypeId="tick">
+	    	<OnReceive><![CDATA[
+	    		if (message->type==0) {
+		    		if (deviceProperties->type == 1) {
+		    			deviceState->status=1;
+		    		} else if (deviceProperties->type == 2) {
+		    			deviceState->status=true;
+		    		}
+	    		} else if (message->type==1) {
+				  	if (deviceProperties->type == 0) {
+				  		deviceState->status--;
+				  	} else if (deviceProperties->type == 3) {
+				  		deviceState->status++;
+				  	} else if (deviceProperties->type == 4) {
+				  		deviceState->status++;
+				  	}
+			  	}
+	    	]]></OnReceive>
+	  	</InputPin>
+
+		<OutputPin name="tick_out" messageTypeId="tick">
+		  <OnSend><![CDATA[
+		  	if (deviceProperties->type == 0) {
+			    //handler_log(0, "root_tick_out, cycle=0x%x, max_ticks=0x%x, status:%d", deviceState->cycle, graphProperties->max_ticks, deviceState->status);
+				//assert(deviceState->status==0);
+				//assert(deviceState->doExport==0);
+				deviceState->cycle++;
+
+				if(deviceState->cycle >= graphProperties->max_ticks){
+					handler_exit(0);
+					*doSend=false;
+				}else{
+					deviceState->status=1;
+				}
+				message->type=0;
+			} else if (deviceProperties->type == 1) {
+				//handler_log(0, "branch_tick_out");
+			    deviceState->status=0;
+			    message->type=0;
+			} else if (deviceProperties->type == 3) {
+			    //handler_log(0, "branch_ack_out");
+			    deviceState->status=0;
+			    message->type=1;
+			} else if (deviceProperties->type == 2) {
+				deviceState->status=false;
+				message->type=1;
+			} else if (deviceProperties->type == 4) {
+				deviceState->status=0;
+				message->type=1;
+			}
+
+		  ]]></OnSend>
+		</OutputPin>
+
+      </DeviceType>
+	  </DeviceTypes>
+	</GraphType>
+</Graphs>
+
