@@ -82,7 +82,7 @@ if len(sys.argv)==2:
         reader = csv.reader(data)
         maxTicks = 10000;
         for row in reader:
-            print row
+            print(row)
             d = int(row[0])
             b = int(row[1])
             f = "graphs/clock_tree_mirror_single_handler_{}_{}.xml".format(d, b)
