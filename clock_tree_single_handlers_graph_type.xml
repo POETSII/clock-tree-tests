@@ -83,7 +83,7 @@
 		    		}
 	    		} else if (message->type==1) {
 				  	if (deviceProperties->type == 0) {
-				  		deviceState->status--;
+				  		deviceState->status = 0;
 				  	} else if (deviceProperties->type == 3) {
 				  		deviceState->status++;
 				  	} else if (deviceProperties->type == 4) {
