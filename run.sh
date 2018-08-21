@@ -121,6 +121,11 @@ function run_test()
     complete=0
     file_location="graphs/clock_tree_instance_"$depth"_"$fanout".xml"
 
+    if [ -f $file_location ] ; then
+    rm $file_location
+    fi
+
+
     python create_clock_tree_instance.py $depth $fanout >> $file_location
 
     if [[ $xml_only == 0 ]] ; then
@@ -135,7 +140,7 @@ function run()
     while [[ $complete == 0 ]] ; do
         prepare_xmlc_arguments
         pts-xmlc $filepath $xmlc_arguments
-		timeout 10m pts-serve --code "$object_location"_code.v --data "$object_location"_data.v --keyvaldst "$object_location"_keyvals.csv  --measuredst "$object_location"_measures.csv --perfmondst "$object_location"_"$depth"_"$fanout"_perfmon.csv --elf "$object_location".elf --headless true >> cycle_output.txt
+		timeout 10m pts-serve --code "$object_location"_code.v --data "$object_location"_data.v --keyvaldst "$object_location"_keyvals.csv  --measuredst "$object_location"_measures.csv --perfmondst "$object_location"_"$depth"_"$fanout"_perfmon.csv --elf "$object_location".elf --headless true
         printf "%d,%d,%s\n" $depth $fanout `cat objects/clock_tree_measures.csv` >> $results_file
         if [[ $? == 0 ]]; then
             complete=1;
